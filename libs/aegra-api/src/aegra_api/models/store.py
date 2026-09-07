@@ -66,6 +66,13 @@ class StoreItem(BaseModel):
     key: str = Field(..., description="The item's key within its namespace.")
     value: Any = Field(..., description="The stored value.")
     namespace: list[str] = Field(..., description="The namespace path where this item is stored.")
+    score: float | None = Field(
+        None,
+        description=(
+            "Relevance/similarity score from a semantic search query. "
+            "None for get/list operations or when the store has no index config."
+        ),
+    )
 
 
 class StoreSearchResponse(BaseModel):

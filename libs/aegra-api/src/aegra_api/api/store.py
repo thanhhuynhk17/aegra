@@ -186,7 +186,10 @@ async def search_store_items(
         offset=offset,
     )
 
-    items = [StoreItem(key=r.key, value=r.value, namespace=list(r.namespace)) for r in results]
+    items = [
+        StoreItem(key=r.key, value=r.value, namespace=list(r.namespace), score=r.score)
+        for r in results
+    ]
 
     return StoreSearchResponse(
         items=items,

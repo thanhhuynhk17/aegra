@@ -118,7 +118,8 @@ class DummyThread:
 class DummyStoreItem:
     """Mock store item for testing"""
 
-    def __init__(self, key: str, value: Any, namespace: tuple):
+    def __init__(self, key: str, value: Any, namespace: tuple, score: float | None = None):
         self.key = key
         self.value = value
         self.namespace = namespace
+        self.score = score

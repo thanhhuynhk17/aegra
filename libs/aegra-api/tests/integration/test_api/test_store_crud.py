@@ -380,6 +380,48 @@ class TestSearchStoreItems:
         call_args = mock_store.asearch.call_args
         assert call_args.kwargs["filter"] is None
 
+    def test_search_items_forwards_relevance_score(self, client, mock_store):
+        """Score computed by the store's semantic search must reach the client.
+
+        Regression test: search_store_items() previously dropped `r.score`
+        when building StoreItem, so every semantic search response reported
+        score=None even though the underlying store ranked results by a real
+        similarity score.
+        """
+        mock_results = [
+            DummyStoreItem("close-match", {"data": "value"}, ("test",), score=0.93),
+            DummyStoreItem("far-match", {"data": "value"}, ("test",), score=0.41),
+        ]
+        mock_store.asearch.return_value = mock_results
+
+        resp = client.post(
+            "/store/items/search",
+            json={
+                "namespace_prefix": ["test"],
+                "query": "matching",
+                "limit": 20,
+                "offset": 0,
+            },
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert [item["score"] for item in data["items"]] == [0.93, 0.41]
+
+    def test_search_items_score_defaults_to_none_without_query(self, client, mock_store):
+        """Filter-only/list-style search (no semantic query) has no relevance score."""
+        mock_results = [DummyStoreItem("key1", {"data": "value1"}, ("test", "ns"))]
+        mock_store.asearch.return_value = mock_results
+
+        resp = client.post(
+            "/store/items/search",
+            json={"namespace_prefix": ["test"], "query": None, "filter": {"type": "note"}},
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["items"][0]["score"] is None
+
     def test_search_items_with_filter_only(self, client, mock_store):
         """Test searching with filter only"""
         mock_results = [
